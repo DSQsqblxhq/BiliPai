@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -21,7 +20,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -95,7 +93,7 @@ internal fun Material3AppUpdateDialog(
                 }
             }
         },
-        dismissButton = if (state.showReleaseNotesOnly) {
+        dismissButton = if (state.showReleaseNotesOnly && !state.downloadState.isActiveDownload()) {
             null
         } else {
             {
@@ -148,12 +146,12 @@ private fun Material3UpdateContent(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Material3VersionCard(state = state)
-            if (!state.showReleaseNotesOnly && state.downloadState.status != AppUpdateDownloadStatus.IDLE) {
+            if (state.downloadState.status != AppUpdateDownloadStatus.IDLE) {
                 Material3DownloadStatus(state = state.downloadState)
             }
             Material3ReleaseNotes(releaseNotes = state.update.releaseNotes)
         }
-        Material3DownloadChannels(actions = actions)
+        AppUpdateDownloadChannels(state = state, actions = actions)
     }
 }
 
@@ -311,45 +309,6 @@ private fun Material3ReleaseNotes(
                     style = MaterialTheme.typography.bodyMedium,
                     color = AppContentColors.secondaryText(),
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun Material3DownloadChannels(
-    actions: AppUpdateDialogActions,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = "其他下载渠道",
-            style = MaterialTheme.typography.labelLarge,
-            color = AppContentColors.secondaryText(),
-        )
-        Row(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .widthIn(max = 320.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            OutlinedButton(
-                onClick = actions.onOpenRelease,
-                modifier = Modifier
-                    .weight(1f)
-                    .sizeIn(minHeight = 48.dp)
-                    .appElasticPress(),
-            ) {
-                Text("正式版下载", maxLines = 1, softWrap = false)
-            }
-            OutlinedButton(
-                onClick = actions.onOpenTestRelease,
-                modifier = Modifier
-                    .weight(1f)
-                    .sizeIn(minHeight = 48.dp)
-                    .appElasticPress(),
-            ) {
-                Text("测试版下载", maxLines = 1, softWrap = false)
             }
         }
     }
