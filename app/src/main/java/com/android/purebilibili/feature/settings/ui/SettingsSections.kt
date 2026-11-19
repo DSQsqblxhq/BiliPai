@@ -2254,7 +2254,7 @@ private fun AppUpdateMirrorPreferences(icon: ImageVector?, iconTint: Color) {
     if (preference.source == AppUpdateMirror.CUSTOM) {
         SettingsAdaptiveDivider()
         SettingClickableItem(
-            title = "自定义镜像地址",
+            title = "自定义源地址",
             subtitle = preference.customPrefix.takeIf(String::isNotEmpty),
             onClick = { editCustomMirror = true },
         )

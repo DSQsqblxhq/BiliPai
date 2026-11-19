@@ -1,6 +1,7 @@
 package com.android.purebilibili.feature.settings
 
 import android.widget.Toast
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +45,7 @@ internal fun AppUpdateDialogHost(
     var mirrorSource by remember(mirrorPreference.source) { mutableStateOf(mirrorPreference.source) }
     var editCustomMirror by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val contentScrollState = rememberScrollState()
 
     fun installIfReady(): Boolean {
         val completedFile = downloadState.filePath
@@ -72,6 +74,7 @@ internal fun AppUpdateDialogHost(
             expectedSha256 = expectedSha256,
             mirrorUrl = mirrorUrl,
         )
+        scope.launch { contentScrollState.animateScrollTo(0) }
     }
 
     val onPrimaryAction: () -> Unit = {
@@ -103,20 +106,18 @@ internal fun AppUpdateDialogHost(
         onOpenTestRelease = { uriHandler.openUri(GITHUB_TEST_DOWNLOAD_URL) },
         onMirrorSelect = { mirrorSource = it },
         onMirrorAction = {
-            if (!installIfReady()) {
-                if (mirrorSource == AppUpdateMirror.CUSTOM && mirrorPreference.customPrefix.isEmpty()) {
-                    editCustomMirror = true
-                } else {
-                    startMirrorDownload(mirrorPreference.customPrefix)
-                }
+            if (mirrorSource == AppUpdateMirror.CUSTOM && mirrorPreference.customPrefix.isEmpty()) {
+                editCustomMirror = true
+            } else {
+                startMirrorDownload(mirrorPreference.customPrefix)
             }
         },
         onDismissRequest = onDismissRequest,
     )
 
     when (LocalAppUiStyle.current) {
-        AppUiStyle.MATERIAL3 -> Material3AppUpdateDialog(state = dialogState, actions = actions)
-        AppUiStyle.MIUIX -> MiuixAppUpdateDialog(state = dialogState, actions = actions)
+        AppUiStyle.MATERIAL3 -> Material3AppUpdateDialog(dialogState, actions, contentScrollState)
+        AppUiStyle.MIUIX -> MiuixAppUpdateDialog(dialogState, actions, contentScrollState)
     }
     if (editCustomMirror) {
         AppUpdateCustomMirrorDialog(
@@ -138,7 +139,10 @@ internal data class AppUpdateDialogState(
     val hasAsset: Boolean,
     val showReleaseNotesOnly: Boolean,
     val mirrorSource: AppUpdateMirror,
-)
+) {
+    val showPrimaryAction: Boolean get() = !showReleaseNotesOnly || hasAsset
+    val showSecondaryAction: Boolean get() = !showReleaseNotesOnly || downloadState.isActiveDownload()
+}
 
 internal data class AppUpdateDialogActions(
     val onPrimaryAction: () -> Unit,

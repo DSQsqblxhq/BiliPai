@@ -7,7 +7,7 @@ internal enum class AppUpdateMirror(val label: String, val prefix: String? = nul
     GH_PROXY("GH-Proxy", "https://gh-proxy.org/"),
     // HiWiki's public GitHub Store uses this node to forward Release assets.
     HIWIKI("HiWiki", "https://gh.idayer.com/"),
-    CUSTOM("自定义镜像源");
+    CUSTOM("自定义源");
 
     companion object {
         fun fromValue(value: String?): AppUpdateMirror = entries.firstOrNull { it.name == value } ?: GHFAST

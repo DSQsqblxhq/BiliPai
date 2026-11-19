@@ -23,9 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.ui.AppAlertDialog
@@ -60,15 +60,19 @@ internal fun AppUpdateCustomMirrorDialog(
     val normalizedPrefix = remember(prefix) { normalizeAppUpdateMirrorPrefix(prefix) }
     AppAlertDialog(
         onDismissRequest = onDismiss,
-        title = { AppText("自定义镜像源") },
+        title = { AppText(AppUpdateMirror.CUSTOM.label) },
         text = {
             AppOutlinedTextField(
                 value = prefix,
                 onValueChange = { prefix = it },
                 modifier = Modifier.fillMaxWidth(),
                 labelText = "HTTPS 镜像前缀",
-                placeholderText = "https://mirror.example/",
-                supportingText = { AppText("下载时会在此前缀后拼接原始 GitHub APK 链接") },
+                supportingText = {
+                    AppText(
+                        "GHFast 前缀示例 ${AppUpdateMirror.GHFAST.prefix.orEmpty()}\n" +
+                            "下载时会在此前缀后拼接原始 GitHub APK 链接",
+                    )
+                },
                 isError = prefix.isNotBlank() && normalizedPrefix == null,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                 singleLine = true,
@@ -84,20 +88,14 @@ internal fun AppUpdateCustomMirrorDialog(
     )
 }
 
-private enum class AppUpdateReleaseLink(val label: String) {
-    STABLE("正式版下载"),
-    TEST("测试版下载"),
+private enum class AppUpdateReleaseLink(val versionLabel: String) {
+    STABLE("正式版"),
+    TEST("测试版"),
 }
 
 @Composable
 internal fun AppUpdateDownloadChannels(state: AppUpdateDialogState, actions: AppUpdateDialogActions) {
     var releaseLink by rememberSaveable { mutableStateOf(AppUpdateReleaseLink.STABLE) }
-    val isDownloading = state.downloadState.isActiveDownload()
-    val mirrorActionLabel = when {
-        isDownloading || state.downloadState.status == AppUpdateDownloadStatus.COMPLETED ->
-            appUpdatePrimaryLabel(state.downloadState, state.hasAsset)
-        else -> state.mirrorSource.label
-    }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         AppText("其他下载渠道", color = AppContentColors.secondaryText())
         Row(
@@ -111,8 +109,9 @@ internal fun AppUpdateDownloadChannels(state: AppUpdateDialogState, actions: App
                 modifier = Modifier.weight(1f),
                 choices = AppUpdateReleaseLink.entries,
                 selected = releaseLink,
-                label = AppUpdateReleaseLink::label,
-                actionLabel = releaseLink.label,
+                label = { "${it.versionLabel}下载" },
+                actionTitle = releaseLink.versionLabel,
+                actionSubtitle = "下载",
                 menuLabel = "选择发布版本",
                 onSelect = { releaseLink = it },
                 onClick = when (releaseLink) {
@@ -125,9 +124,10 @@ internal fun AppUpdateDownloadChannels(state: AppUpdateDialogState, actions: App
                 choices = AppUpdateMirror.entries,
                 selected = state.mirrorSource,
                 label = AppUpdateMirror::label,
-                actionLabel = mirrorActionLabel,
+                actionTitle = "镜像下载",
+                actionSubtitle = state.mirrorSource.label,
                 menuLabel = "选择下载镜像",
-                enabled = state.hasAsset && !isDownloading,
+                enabled = state.hasAsset && !state.downloadState.isActiveDownload(),
                 onSelect = actions.onMirrorSelect,
                 onClick = actions.onMirrorAction,
             )
@@ -141,7 +141,8 @@ private fun <T> AppUpdateDownloadChannelButton(
     choices: List<T>,
     selected: T,
     label: (T) -> String,
-    actionLabel: String,
+    actionTitle: String,
+    actionSubtitle: String,
     menuLabel: String,
     enabled: Boolean = true,
     onSelect: (T) -> Unit,
@@ -160,11 +161,28 @@ private fun <T> AppUpdateDownloadChannelButton(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AppTextButton(
                     onClick = onClick,
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    modifier = Modifier.weight(1f).heightIn(min = 56.dp),
                     enabled = enabled,
                     contentPadding = PaddingValues(start = 8.dp, end = 0.dp),
                 ) {
-                    AppText(actionLabel, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        AppText(
+                            text = actionTitle,
+                            fontSize = 14.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                            tapToCopyEnabled = false,
+                        )
+                        AppText(
+                            text = actionSubtitle,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                            tapToCopyEnabled = false,
+                        )
+                    }
                 }
                 AppIconButton(onClick = { expanded = true }, enabled = enabled) {
                     AppIcon(Icons.Filled.KeyboardArrowDown, contentDescription = menuLabel)
@@ -178,7 +196,9 @@ private fun <T> AppUpdateDownloadChannelButton(
         ) {
             choices.forEach { choice ->
                 AppDropdownMenuItem(
-                    text = { AppText(label(choice)) },
+                    text = {
+                        AppText(label(choice), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                    },
                     selected = choice == selected,
                     onClick = {
                         expanded = false
