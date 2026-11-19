@@ -31,6 +31,7 @@ import com.android.purebilibili.core.store.SettingsManager
 import com.android.purebilibili.core.ui.AppAlertDialog
 import com.android.purebilibili.core.ui.AppContentColors
 import com.android.purebilibili.core.ui.AppShapes
+import com.android.purebilibili.core.ui.AppSurfaceTokens
 import com.android.purebilibili.core.ui.ContainerLevel
 import com.android.purebilibili.core.ui.components.AppDropdownMenu
 import com.android.purebilibili.core.ui.components.AppDropdownMenuItem
@@ -151,7 +152,10 @@ private fun <T> AppUpdateDownloadChannelButton(
         AppSurface(
             shape = AppShapes.container(ContainerLevel.Pill),
             color = Color.Transparent,
-            border = BorderStroke(1.dp, AppContentColors.outline().copy(alpha = 0.45f)),
+            border = BorderStroke(
+                AppSurfaceTokens.OutlineWidth,
+                AppSurfaceTokens.outline().copy(alpha = 0.45f),
+            ),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AppTextButton(
